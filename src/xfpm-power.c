@@ -128,6 +128,7 @@ struct XfpmPowerPrivate
     gchar           *daemon_version;
     gboolean	     can_suspend;
     gboolean         can_hibernate;
+    gboolean         can_hybrid_sleep;
 
     /**
      * Warning dialog to use when notification daemon
@@ -145,6 +146,7 @@ enum
     PROP_AUTH_HIBERNATE,
     PROP_CAN_SUSPEND,
     PROP_CAN_HIBERNATE,
+    PROP_CAN_HYBRID_SLEEP,
     PROP_HAS_LID,
     PROP_PRESENTATION_MODE,
     PROP_ON_AC_BLANK,
@@ -313,26 +315,31 @@ xfpm_power_get_properties (XfpmPower *power)
         g_object_get (G_OBJECT (power->priv->systemd),
                       "can-suspend", &power->priv->can_suspend,
                       NULL);
-	g_object_get (G_OBJECT (power->priv->systemd),
+		g_object_get (G_OBJECT (power->priv->systemd),
                       "can-hibernate", &power->priv->can_hibernate,
+                      NULL);
+        g_object_get (G_OBJECT (power->priv->systemd),
+                      "can-hybrid-sleep", &power->priv->can_hybrid_sleep,
                       NULL);
     }
     else
     {
-	if (check_for_consolekit2 (power))
-	{
-	    g_object_get (G_OBJECT (power->priv->console),
-			  "can-suspend", &power->priv->can_suspend,
-			  NULL);
-	    g_object_get (G_OBJECT (power->priv->console),
-			  "can-hibernate", &power->priv->can_hibernate,
-			  NULL);
-	}
-	else
-	{
-	    power->priv->can_suspend   = xfpm_suspend_can_suspend ();
-	    power->priv->can_hibernate = xfpm_suspend_can_hibernate ();
-	}
+		if (check_for_consolekit2 (power))
+		{
+		    g_object_get (G_OBJECT (power->priv->console),
+				  "can-suspend", &power->priv->can_suspend,
+				  NULL);
+		    g_object_get (G_OBJECT (power->priv->console),
+				  "can-hibernate", &power->priv->can_hibernate,
+				  NULL);
+		}
+		else
+		{
+		    power->priv->can_suspend   = xfpm_suspend_can_suspend ();
+		    power->priv->can_hibernate = xfpm_suspend_can_hibernate ();
+		}
+
+	    power->priv->can_hybrid_sleep = FALSE;
     }
 #endif
     g_object_get (power->priv->upower,
@@ -455,7 +462,7 @@ xfpm_power_sleep (XfpmPower *power, const gchar *sleep_time, gboolean force)
      */
     if ( LOGIND_RUNNING () )
     {
-	xfpm_systemd_sleep (power->priv->systemd, sleep_time, &error);
+	    xfpm_systemd_sleep (power->priv->systemd, sleep_time, &error);
     }
     else
     {
@@ -464,34 +471,39 @@ xfpm_power_sleep (XfpmPower *power, const gchar *sleep_time, gboolean force)
 	{
 	    up_client_hibernate_sync(power->priv->upower, NULL, &error);
 	}
-	else
+	else if (!g_strcmp0 (sleep_time, "Suspend"))
 	{
 	    up_client_suspend_sync(power->priv->upower, NULL, &error);
 	}
 #else
 	if (!g_strcmp0 (sleep_time, "Hibernate"))
-        {
+    {
 	    if (check_for_consolekit2 (power))
 	    {
-		xfpm_console_kit_hibernate (power->priv->console, &error);
+			xfpm_console_kit_hibernate (power->priv->console, &error);
 	    }
 	    else
 	    {
-                xfpm_suspend_try_action (XFPM_HIBERNATE);
+	        xfpm_suspend_try_action (XFPM_HIBERNATE);
 	    }
-        }
-        else
-        {
-	    if (check_for_consolekit2 (power))
-	    {
-		xfpm_console_kit_suspend (power->priv->console, &error);
-	    }
-	    else
-	    {
-                xfpm_suspend_try_action (XFPM_SUSPEND);
-	    }
-        }
+    }
+    else
+    {
+		if (check_for_consolekit2 (power))
+		{
+			xfpm_console_kit_suspend (power->priv->console, &error);
+		}
+		else
+		{
+		    xfpm_suspend_try_action (XFPM_SUSPEND);
+		}
+    }
 #endif
+    else
+    {
+        // Method is not implemented
+        g_set_error (&error, 0, 0, "This action is not supported by this system.");
+    }
     }
 
     if ( error )
@@ -1129,6 +1141,13 @@ xfpm_power_class_init (XfpmPowerClass *klass)
                                                           G_PARAM_READABLE));
 
     g_object_class_install_property (object_class,
+                                     PROP_CAN_HYBRID_SLEEP,
+                                     g_param_spec_boolean ("can-hybrid-sleep",
+                                                           NULL, NULL,
+                                                           FALSE,
+                                                           G_PARAM_READABLE));
+
+    g_object_class_install_property (object_class,
                                      PROP_CAN_SUSPEND,
                                      g_param_spec_boolean ("can-suspend",
                                                           NULL, NULL,
@@ -1188,6 +1207,7 @@ xfpm_power_init (XfpmPower *power)
     power->priv->daemon_version  = NULL;
     power->priv->can_suspend     = FALSE;
     power->priv->can_hibernate   = FALSE;
+    power->priv->can_hybrid_sleep = FALSE;
     power->priv->auth_hibernate  = TRUE;
     power->priv->auth_suspend    = TRUE;
     power->priv->dialog          = NULL;
@@ -1276,6 +1296,9 @@ static void xfpm_power_get_property (GObject *object,
         break;
     case PROP_CAN_HIBERNATE:
         g_value_set_boolean (value, power->priv->can_hibernate);
+        break;
+    case PROP_CAN_HYBRID_SLEEP:
+        g_value_set_boolean (value, power->priv->can_hybrid_sleep);
         break;
     case PROP_HAS_LID:
         g_value_set_boolean (value, power->priv->lid_is_present);
@@ -1401,6 +1424,11 @@ void xfpm_power_suspend (XfpmPower *power, gboolean force)
 void xfpm_power_hibernate (XfpmPower *power, gboolean force)
 {
     xfpm_power_sleep (power, "Hibernate", force);
+}
+
+void xfpm_power_hybrid_sleep (XfpmPower *power, gboolean force)
+{
+    xfpm_power_sleep (power, "HybridSleep", force);
 }
 
 gboolean xfpm_power_has_battery (XfpmPower *power)

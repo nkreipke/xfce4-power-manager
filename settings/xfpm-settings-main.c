@@ -60,6 +60,7 @@ int main (int argc, char **argv)
     gboolean auth_hibernate;
     gboolean can_suspend;
     gboolean can_hibernate;
+    gboolean can_hybrid_sleep;
     gboolean can_shutdown;
     gboolean has_lcd_brightness;
     gboolean has_sleep_button;
@@ -179,6 +180,7 @@ int main (int argc, char **argv)
 	has_lid = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "has-lid"));
 	can_suspend = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "can-suspend"));
 	can_hibernate = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "can-hibernate"));
+    can_hybrid_sleep = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "can-hybrid-sleep"));
 	auth_suspend = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "auth-suspend"));
 	auth_hibernate = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "auth-hibernate"));
 	has_lcd_brightness = xfpm_string_to_bool (g_hash_table_lookup (config_hash, "has-brightness"));
@@ -190,7 +192,7 @@ int main (int argc, char **argv)
 	g_hash_table_destroy (config_hash);
 
 	dialog = xfpm_settings_dialog_new (channel, auth_suspend, auth_hibernate,
-					   can_suspend, can_hibernate, can_shutdown, has_battery, has_lcd_brightness,
+					   can_suspend, can_hibernate, can_hybrid_sleep, can_shutdown, has_battery, has_lcd_brightness,
 					   has_lid, has_sleep_button, has_hibernate_button, has_power_button,
 					   socket_id, device_id);
 

@@ -45,7 +45,8 @@ typedef enum
     XFPM_DO_SUSPEND,
     XFPM_DO_HIBERNATE,
     XFPM_ASK,
-    XFPM_DO_SHUTDOWN
+    XFPM_DO_SHUTDOWN,
+    XFPM_DO_HYBRID_SLEEP
 
 } XfpmShutdownRequest;
 
@@ -55,6 +56,8 @@ typedef enum
     LID_TRIGGER_SUSPEND,
     LID_TRIGGER_HIBERNATE,
     LID_TRIGGER_LOCK_SCREEN,
+
+    LID_TRIGGER_HYBRID_SLEEP = XFPM_DO_HYBRID_SLEEP
 
 } XfpmLidTriggerAction;
 

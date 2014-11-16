@@ -52,6 +52,7 @@ struct XfpmSystemdPrivate
     gboolean         can_restart;
     gboolean         can_suspend;
     gboolean         can_hibernate;
+    gboolean         can_hybrid_sleep;
 #ifdef ENABLE_POLKIT
     XfpmPolkit      *polkit;
 #endif
@@ -64,6 +65,7 @@ enum
     PROP_CAN_SHUTDOWN,
     PROP_CAN_SUSPEND,
     PROP_CAN_HIBERNATE,
+    PROP_CAN_HYBRID_SLEEP
 };
 
 G_DEFINE_TYPE (XfpmSystemd, xfpm_systemd, G_TYPE_OBJECT)
@@ -114,6 +116,12 @@ xfpm_systemd_class_init (XfpmSystemdClass *klass)
                                                            NULL, NULL,
                                                            FALSE,
                                                            G_PARAM_READABLE));
+    g_object_class_install_property (object_class,
+                                     PROP_CAN_HYBRID_SLEEP,
+                                     g_param_spec_boolean ("can-hybrid-sleep",
+                                                           NULL, NULL,
+                                                           FALSE,
+                                                           G_PARAM_READABLE));
 
     g_type_class_add_private (klass, sizeof (XfpmSystemdPrivate));
 }
@@ -156,6 +164,9 @@ xfpm_systemd_init (XfpmSystemd *systemd)
     xfpm_systemd_can_method (systemd,
                              &systemd->priv->can_hibernate,
                              SYSTEMD_HIBERNATE_TEST);
+
+    systemd->priv->can_hybrid_sleep =
+        systemd->priv->can_suspend && systemd->priv->can_hibernate;
 }
 
 static void xfpm_systemd_get_property (GObject *object,
@@ -179,6 +190,9 @@ static void xfpm_systemd_get_property (GObject *object,
         break;
     case PROP_CAN_HIBERNATE:
         g_value_set_boolean (value, systemd->priv->can_hibernate);
+        break;
+    case PROP_CAN_HYBRID_SLEEP:
+        g_value_set_boolean (value, systemd->priv->can_hybrid_sleep);
         break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

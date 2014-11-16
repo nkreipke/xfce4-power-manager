@@ -73,6 +73,8 @@ void			xfpm_power_suspend         	(XfpmPower *power,
 void			xfpm_power_hibernate       	(XfpmPower *power,
 							 gboolean force);
 
+void   xfpm_power_hybrid_sleep (XfpmPower *power, gboolean force);
+
 gboolean		xfpm_power_has_battery		(XfpmPower *power);
 
 gboolean        xfpm_power_is_in_presentation_mode (XfpmPower *power);

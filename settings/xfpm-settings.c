@@ -849,7 +849,7 @@ xfpm_update_logind_handle_lid_switch (XfconfChannel *channel)
 static void
 xfpm_settings_on_battery (XfconfChannel *channel, gboolean auth_suspend,
                           gboolean auth_hibernate, gboolean can_suspend,
-                          gboolean can_hibernate, gboolean can_shutdown,
+                          gboolean can_hibernate, gboolean can_hybrid_sleep, gboolean can_shutdown,
                           gboolean has_lcd_brightness, gboolean has_lid)
 {
     gboolean valid, handle_dpms;
@@ -1023,6 +1023,12 @@ xfpm_settings_on_battery (XfconfChannel *channel, gboolean auth_suspend,
 	    gtk_list_store_append(list_store, &iter);
 	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, LID_TRIGGER_HIBERNATE, -1);
 	}
+
+    if ( can_hybrid_sleep && auth_suspend && auth_hibernate )
+    {
+        gtk_list_store_append(list_store, &iter);
+        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, LID_TRIGGER_HYBRID_SLEEP, -1);
+    }
 	
 	gtk_list_store_append(list_store, &iter);
 	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, LID_TRIGGER_LOCK_SCREEN, -1);
@@ -1075,7 +1081,7 @@ xfpm_settings_on_battery (XfconfChannel *channel, gboolean auth_suspend,
 static void
 xfpm_settings_on_ac (XfconfChannel *channel, gboolean auth_suspend,
                      gboolean auth_hibernate, gboolean can_suspend,
-                     gboolean can_hibernate, gboolean has_lcd_brightness,
+                     gboolean can_hibernate, gboolean can_hybrid_sleep, gboolean has_lcd_brightness,
                      gboolean has_lid)
 {
     gboolean valid, handle_dpms;
@@ -1200,6 +1206,12 @@ xfpm_settings_on_ac (XfconfChannel *channel, gboolean auth_suspend,
 	    gtk_list_store_append(list_store, &iter);
 	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, LID_TRIGGER_HIBERNATE, -1);
 	}
+    
+    if ( can_hybrid_sleep && auth_suspend && auth_hibernate )
+    {
+        gtk_list_store_append(list_store, &iter);
+        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, LID_TRIGGER_HYBRID_SLEEP, -1);
+    }
 	
 	gtk_list_store_append(list_store, &iter);
 	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, LID_TRIGGER_LOCK_SCREEN, -1);
@@ -2248,7 +2260,7 @@ delete_event_cb (GtkWidget *plug, GdkEvent *ev, XfconfChannel *channel)
 GtkWidget *
 xfpm_settings_dialog_new (XfconfChannel *channel, gboolean auth_suspend,
                           gboolean auth_hibernate, gboolean can_suspend,
-                          gboolean can_hibernate, gboolean can_shutdown,
+                          gboolean can_hibernate, gboolean can_hybrid_sleep, gboolean can_shutdown,
                           gboolean has_battery, gboolean has_lcd_brightness,
                           gboolean has_lid, gboolean has_sleep_button,
                           gboolean has_hibernate_button, gboolean has_power_button,
@@ -2266,12 +2278,13 @@ xfpm_settings_dialog_new (XfconfChannel *channel, gboolean auth_suspend,
     GError *error = NULL;
     guint val;
 
-    XFPM_DEBUG ("auth_hibernate=%s auth_suspend=%s can_shutdown=%s can_suspend=%s can_hibernate=%s " \
+    XFPM_DEBUG ("auth_hibernate=%s auth_suspend=%s can_shutdown=%s can_suspend=%s can_hibernate=%s can_hybrid_sleep=%s " \
                 "has_battery=%s has_lcd_brightness=%s has_lid=%s has_sleep_button=%s " \
                 "has_hibernate_button=%s has_power_button=%s",
       xfpm_bool_to_string (has_battery), xfpm_bool_to_string (auth_hibernate),
 	  xfpm_bool_to_string (can_shutdown), xfpm_bool_to_string (auth_suspend),
 	  xfpm_bool_to_string (can_suspend), xfpm_bool_to_string (can_hibernate),
+      xfpm_bool_to_string (can_hybrid_sleep),
 	  xfpm_bool_to_string (has_lcd_brightness), xfpm_bool_to_string (has_lid),
 	  xfpm_bool_to_string (has_sleep_button), xfpm_bool_to_string (has_hibernate_button),
 	  xfpm_bool_to_string (has_power_button));
@@ -2364,6 +2377,7 @@ xfpm_settings_dialog_new (XfconfChannel *channel, gboolean auth_suspend,
                          auth_hibernate,
                          can_suspend,
                          can_hibernate,
+                         can_hybrid_sleep,
                          has_lcd_brightness,
                          has_lid);
 
@@ -2373,6 +2387,7 @@ xfpm_settings_dialog_new (XfconfChannel *channel, gboolean auth_suspend,
                               auth_hibernate,
                               can_suspend,
                               can_hibernate,
+                              can_hybrid_sleep,
                               can_shutdown,
                               has_lcd_brightness,
                               has_lid);

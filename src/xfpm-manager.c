@@ -255,6 +255,9 @@ xfpm_manager_sleep_request (XfpmManager *manager, XfpmShutdownRequest req, gbool
 	case XFPM_DO_HIBERNATE:
 	    xfpm_power_hibernate (manager->priv->power, force);
 	    break;
+    case XFPM_DO_HYBRID_SLEEP:
+        xfpm_power_hybrid_sleep (manager->priv->power, force);
+        break;
 	case XFPM_DO_SHUTDOWN:
 	    xfpm_manager_shutdown (manager);
 	    break;
@@ -780,6 +783,7 @@ GHashTable *xfpm_manager_get_config (XfpmManager *manager)
     gboolean auth_suspend = FALSE;
     gboolean can_suspend = FALSE;
     gboolean can_hibernate = FALSE;
+    gboolean can_hybrid_sleep = FALSE;
     gboolean has_sleep_button = FALSE;
     gboolean has_hibernate_button = FALSE;
     gboolean has_power_button = FALSE;
@@ -808,6 +812,7 @@ GHashTable *xfpm_manager_get_config (XfpmManager *manager)
 		  "auth-hibernate", &auth_hibernate,
                   "can-suspend", &can_suspend,
                   "can-hibernate", &can_hibernate,
+                  "can-hybrid-sleep", &can_hybrid_sleep,
 		  "has-lid", &has_lid,
 		  NULL);
 
@@ -830,6 +835,7 @@ GHashTable *xfpm_manager_get_config (XfpmManager *manager)
     g_hash_table_insert (hash, g_strdup ("auth-hibernate"), g_strdup (xfpm_bool_to_string (auth_hibernate)));
     g_hash_table_insert (hash, g_strdup ("can-suspend"), g_strdup (xfpm_bool_to_string (can_suspend)));
     g_hash_table_insert (hash, g_strdup ("can-hibernate"), g_strdup (xfpm_bool_to_string (can_hibernate)));
+    g_hash_table_insert (hash, g_strdup ("can-hybrid-sleep"), g_strdup (xfpm_bool_to_string (can_hybrid_sleep)));
     g_hash_table_insert (hash, g_strdup ("can-shutdown"), g_strdup (xfpm_bool_to_string (can_shutdown)));
 
     g_hash_table_insert (hash, g_strdup ("has-battery"), g_strdup (xfpm_bool_to_string (has_battery)));
