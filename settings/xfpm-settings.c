@@ -838,8 +838,8 @@ void
 xfpm_update_logind_handle_lid_switch (XfconfChannel *channel)
 {
     gboolean lock_on_suspend = xfconf_channel_get_bool (channel, PROPERTIES_PREFIX LOCK_SCREEN_ON_SLEEP, TRUE);
-    guint lid_switch_on_ac = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_AC_CFG, LID_TRIGGER_LOCK_SCREEN);
-    guint lid_switch_on_battery = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_BATTERY_CFG, LID_TRIGGER_LOCK_SCREEN);
+    guint lid_switch_on_ac = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_AC_CFG, XFPM_DO_LOCK_SCREEN);
+    guint lid_switch_on_battery = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_BATTERY_CFG, XFPM_DO_LOCK_SCREEN);
 
     // logind-handle-lid-switch = true when: lock_on_suspend == true and (lid_switch_on_ac == suspend or lid_switch_on_battery == suspend)
     xfconf_channel_set_bool (channel, PROPERTIES_PREFIX LOGIND_HANDLE_LID_SWITCH, lock_on_suspend && (lid_switch_on_ac == 1 || lid_switch_on_battery == 1));
@@ -1010,32 +1010,32 @@ xfpm_settings_on_battery (XfconfChannel *channel, gboolean auth_suspend,
 	gtk_combo_box_set_model (GTK_COMBO_BOX(lid), GTK_TREE_MODEL(list_store));
 	
 	gtk_list_store_append(list_store, &iter);
-	gtk_list_store_set (list_store, &iter, 0, _("Switch off display"), 1, LID_TRIGGER_NOTHING, -1);
+	gtk_list_store_set (list_store, &iter, 0, _("Switch off display"), 1, XFPM_DO_NOTHING, -1);
 	
 	if ( can_suspend && auth_suspend )
 	{
 	    gtk_list_store_append(list_store, &iter);
-	    gtk_list_store_set (list_store, &iter, 0, _("Suspend"), 1, LID_TRIGGER_SUSPEND, -1);
+	    gtk_list_store_set (list_store, &iter, 0, _("Suspend"), 1, XFPM_DO_SUSPEND, -1);
 	}
 	
 	if ( can_hibernate && auth_hibernate)
 	{
 	    gtk_list_store_append(list_store, &iter);
-	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, LID_TRIGGER_HIBERNATE, -1);
+	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, XFPM_DO_HIBERNATE, -1);
 	}
 
     if ( can_hybrid_sleep && auth_suspend && auth_hibernate )
     {
         gtk_list_store_append(list_store, &iter);
-        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, LID_TRIGGER_HYBRID_SLEEP, -1);
+        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, XFPM_DO_HYBRID_SLEEP, -1);
     }
 	
 	gtk_list_store_append(list_store, &iter);
-	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, LID_TRIGGER_LOCK_SCREEN, -1);
+	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, XFPM_DO_LOCK_SCREEN, -1);
 	
 	gtk_combo_box_set_active (GTK_COMBO_BOX (lid), 0);
 	
-	val = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_BATTERY_CFG, LID_TRIGGER_LOCK_SCREEN);
+	val = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_BATTERY_CFG, XFPM_DO_LOCK_SCREEN);
 	
 	for ( valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (list_store), &iter);
 	      valid;
@@ -1193,32 +1193,32 @@ xfpm_settings_on_ac (XfconfChannel *channel, gboolean auth_suspend,
 	gtk_combo_box_set_model (GTK_COMBO_BOX(lid), GTK_TREE_MODEL(list_store));
 	
 	gtk_list_store_append(list_store, &iter);
-	gtk_list_store_set (list_store, &iter, 0, _("Switch off display"), 1, LID_TRIGGER_NOTHING, -1);
+	gtk_list_store_set (list_store, &iter, 0, _("Switch off display"), 1, XFPM_DO_NOTHING, -1);
 	
 	if ( can_suspend && auth_suspend )
 	{
 	    gtk_list_store_append(list_store, &iter);
-	    gtk_list_store_set (list_store, &iter, 0, _("Suspend"), 1, LID_TRIGGER_SUSPEND, -1);
+	    gtk_list_store_set (list_store, &iter, 0, _("Suspend"), 1, XFPM_DO_SUSPEND, -1);
 	}
 	
 	if ( can_hibernate && auth_hibernate )
 	{
 	    gtk_list_store_append(list_store, &iter);
-	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, LID_TRIGGER_HIBERNATE, -1);
+	    gtk_list_store_set (list_store, &iter, 0, _("Hibernate"), 1, XFPM_DO_HIBERNATE, -1);
 	}
     
     if ( can_hybrid_sleep && auth_suspend && auth_hibernate )
     {
         gtk_list_store_append(list_store, &iter);
-        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, LID_TRIGGER_HYBRID_SLEEP, -1);
+        gtk_list_store_set (list_store, &iter, 0, _("Hybrid Sleep"), 1, XFPM_DO_HYBRID_SLEEP, -1);
     }
 	
 	gtk_list_store_append(list_store, &iter);
-	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, LID_TRIGGER_LOCK_SCREEN, -1);
+	gtk_list_store_set (list_store, &iter, 0, _("Lock screen"), 1, XFPM_DO_LOCK_SCREEN, -1);
 	
 	gtk_combo_box_set_active (GTK_COMBO_BOX (lid), 0);
 	
-	val = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_AC_CFG, LID_TRIGGER_LOCK_SCREEN);
+	val = xfconf_channel_get_uint (channel, PROPERTIES_PREFIX LID_SWITCH_ON_AC_CFG, XFPM_DO_LOCK_SCREEN);
 	for ( valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (list_store), &iter);
 	      valid;
 	      valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (list_store), &iter) )

@@ -242,8 +242,19 @@ xfpm_manager_ask_shutdown (XfpmManager *manager)
 	xfce_sm_client_request_shutdown (manager->priv->client, XFCE_SM_CLIENT_SHUTDOWN_HINT_ASK);
 }
 
+static void xfpm_manager_try_lock_screen(void)
+{
+    if (!xfpm_lock_screen ())
+    {
+        xfce_dialog_show_error (NULL, NULL,
+                    _("None of the screen lock tools ran "
+                      "successfully, the screen will not "
+                      "be locked."));
+    }
+}
+
 static void
-xfpm_manager_sleep_request (XfpmManager *manager, XfpmShutdownRequest req, gboolean force)
+xfpm_manager_request_action (XfpmManager *manager, XfpmShutdownRequest req, gboolean force)
 {
     switch (req)
     {
@@ -255,15 +266,18 @@ xfpm_manager_sleep_request (XfpmManager *manager, XfpmShutdownRequest req, gbool
 	case XFPM_DO_HIBERNATE:
 	    xfpm_power_hibernate (manager->priv->power, force);
 	    break;
-    case XFPM_DO_HYBRID_SLEEP:
-        xfpm_power_hybrid_sleep (manager->priv->power, force);
+    case XFPM_ASK:
+        xfpm_manager_ask_shutdown (manager);
         break;
 	case XFPM_DO_SHUTDOWN:
 	    xfpm_manager_shutdown (manager);
 	    break;
-	case XFPM_ASK:
-	    xfpm_manager_ask_shutdown (manager);
-	    break;
+    case XFPM_DO_LOCK_SCREEN:
+        xfpm_manager_try_lock_screen ();
+        break;
+    case XFPM_DO_HYBRID_SLEEP:
+        xfpm_power_hybrid_sleep (manager->priv->power, force);
+        break;
 	default:
 	    g_warn_if_reached ();
 	    break;
@@ -321,7 +335,7 @@ xfpm_manager_button_pressed_cb (XfpmButton *bt, XfpmButtonKey type, XfpmManager 
 	if ( g_timer_elapsed (manager->priv->timer, NULL) > SLEEP_KEY_TIMEOUT )
 	{
 	    g_timer_reset (manager->priv->timer);
-	    xfpm_manager_sleep_request (manager, req, FALSE);
+	    xfpm_manager_request_action (manager, req, FALSE);
 	}
     }
 }
@@ -329,7 +343,7 @@ xfpm_manager_button_pressed_cb (XfpmButton *bt, XfpmButtonKey type, XfpmManager 
 static void
 xfpm_manager_lid_changed_cb (XfpmPower *power, gboolean lid_is_closed, XfpmManager *manager)
 {
-    XfpmLidTriggerAction action;
+    XfpmShutdownRequest action;
     gboolean on_battery, logind_handle_lid_switch;
 
     if ( LOGIND_RUNNING() )
@@ -352,42 +366,33 @@ xfpm_manager_lid_changed_cb (XfpmPower *power, gboolean lid_is_closed, XfpmManag
 
     if ( lid_is_closed )
     {
-	XFPM_DEBUG_ENUM (action, XFPM_TYPE_LID_TRIGGER_ACTION, "LID close event");
+    	XFPM_DEBUG_ENUM (action, XFPM_TYPE_SHUTDOWN_REQUEST, "LID closed");
 
-	if ( action == LID_TRIGGER_NOTHING )
-	{
-	    if ( !xfpm_is_multihead_connected () )
-		xfpm_dpms_force_level (manager->priv->dpms, DPMSModeOff);
-	}
-	else if ( action == LID_TRIGGER_LOCK_SCREEN )
-	{
-	    if ( !xfpm_is_multihead_connected () )
-	    {
-		if (!xfpm_lock_screen ())
-		{
-		    xfce_dialog_show_error (NULL, NULL,
-					    _("None of the screen lock tools ran "
-					      "successfully, the screen will not "
-					      "be locked."));
-		}
-	    }
-	}
-	else
-	{
-	    /*
-	     * Force sleep here as lid is closed and no point of asking the
-	     * user for confirmation in case of an application is inhibiting
-	     * the power manager.
-	     */
-	    xfpm_manager_sleep_request (manager, action, TRUE);
-	}
+        if ( action == XFPM_DO_LOCK_SCREEN && xfpm_is_multihead_connected () )
+        {
+            /* In case the user has configured to lock the screen, we have
+             * to cancel if there is an external monitor connected. */
+            action = XFPM_DO_NOTHING;
+        }
 
+    	if ( action == XFPM_DO_NOTHING && !xfpm_is_multihead_connected () )
+    	{
+            /* If there is no external monitor connected, we can turn off the
+             * screen now. */
+    	    xfpm_dpms_force_level (manager->priv->dpms, DPMSModeOff);
+    	}
+
+        /* Force sleep here as lid is closed and no point of asking the
+         * user for confirmation in case of an application is inhibiting
+         * the power manager. */
+        xfpm_manager_request_action (manager, action, TRUE);
     }
     else
     {
-	XFPM_DEBUG_ENUM (action, XFPM_TYPE_LID_TRIGGER_ACTION, "LID opened");
+    	XFPM_DEBUG_ENUM (action, XFPM_TYPE_SHUTDOWN_REQUEST, "LID opened");
 
-	xfpm_dpms_force_level (manager->priv->dpms, DPMSModeOn);
+        /* Turn the screen back on */
+    	xfpm_dpms_force_level (manager->priv->dpms, DPMSModeOn);
     }
 }
 
@@ -430,9 +435,9 @@ xfpm_manager_alarm_timeout_cb (EggIdletime *idle, guint id, XfpmManager *manager
 		      NULL);
 
 	if ( id == TIMEOUT_INACTIVITY_ON_AC && on_battery == FALSE )
-	    xfpm_manager_sleep_request (manager, sleep_mode, FALSE);
+	    xfpm_manager_request_action (manager, sleep_mode, FALSE);
 	else if ( id ==  TIMEOUT_INACTIVITY_ON_BATTERY && on_battery  )
-	    xfpm_manager_sleep_request (manager, sleep_mode, FALSE);
+	    xfpm_manager_request_action (manager, sleep_mode, FALSE);
     }
 }
 

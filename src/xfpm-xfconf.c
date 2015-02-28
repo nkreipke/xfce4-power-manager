@@ -229,6 +229,18 @@ xfpm_xfsession_property_changed_cb (XfconfChannel *channel, gchar *property,
                              g_value_get_boolean(value));
 }
 
+static GParamSpec *
+xfpm_fxconf_param_spec_action(const gchar *name, XfpmShutdownRequest defaultValue)
+{
+    return g_param_spec_uint (name,
+                              NULL,
+                              NULL,
+                              XFPM_ACTION_MINIMUM_VALUE,
+                              XFPM_ACTION_MAXIMUM_VALUE,
+                              defaultValue,
+                              G_PARAM_READWRITE);
+}
+
 static void
 xfpm_xfconf_class_init (XfpmXfconfClass *klass)
 {
@@ -300,66 +312,46 @@ xfpm_xfconf_class_init (XfpmXfconfClass *klass)
 							NEVER_SHOW_ICON,
 							SHOW_ICON_WHEN_BATTERY_PRESENT,
                                                         G_PARAM_READWRITE));
-							
+
     /**
      * XfpmXfconf::critical-battery-action
      **/
     g_object_class_install_property (object_class,
                                      PROP_CRITICAL_BATTERY_ACTION,
-                                     g_param_spec_uint (CRITICAL_BATT_ACTION_CFG,
-                                                        NULL, NULL,
-							XFPM_DO_NOTHING,
-							XFPM_DO_SHUTDOWN,
-							XFPM_DO_NOTHING,
-                                                        G_PARAM_READWRITE));
+                                     xfpm_fxconf_param_spec_action (CRITICAL_BATT_ACTION_CFG,
+                                                                    XFPM_DO_NOTHING));
     /**
      * XfpmXfconf::power-switch-action
      **/
     g_object_class_install_property (object_class,
                                      PROP_POWER_BUTTON,
-                                     g_param_spec_uint (POWER_SWITCH_CFG,
-                                                        NULL, NULL,
-							XFPM_DO_NOTHING,
-							XFPM_DO_SHUTDOWN,
-							XFPM_DO_NOTHING,
-                                                        G_PARAM_READWRITE));
-							
+                                     xfpm_fxconf_param_spec_action (POWER_SWITCH_CFG,
+                                                                    XFPM_DO_NOTHING));
+
     /**
      * XfpmXfconf::sleep-switch-action
      **/
     g_object_class_install_property (object_class,
                                      PROP_SLEEP_BUTTON,
-                                     g_param_spec_uint (SLEEP_SWITCH_CFG,
-                                                        NULL, NULL,
-							XFPM_DO_NOTHING,
-							XFPM_DO_SHUTDOWN,
-							XFPM_DO_NOTHING,
-                                                        G_PARAM_READWRITE));
-							
+                                     xfpm_fxconf_param_spec_action (SLEEP_SWITCH_CFG,
+                                                                    XFPM_DO_NOTHING));
+
     /**
      * XfpmXfconf::hibernate-switch-action
      **/
     g_object_class_install_property (object_class,
                                      PROP_HIBERNATE_BUTTON,
-                                     g_param_spec_uint (HIBERNATE_SWITCH_CFG,
-                                                        NULL, NULL,
-							XFPM_DO_NOTHING,
-							XFPM_DO_SHUTDOWN,
-							XFPM_DO_NOTHING,
-                                                        G_PARAM_READWRITE));
-    
+                                     xfpm_fxconf_param_spec_action (HIBERNATE_SWITCH_CFG,
+                                                                    XFPM_DO_NOTHING));
+
     /**
      * XfpmXfconf::lid-action-on-ac
      **/
     g_object_class_install_property (object_class,
                                      PROP_LID_ACTION_ON_AC,
-                                     g_param_spec_uint (LID_SWITCH_ON_AC_CFG,
-                                                        NULL, NULL,
-							LID_TRIGGER_NOTHING,
-							LID_TRIGGER_HYBRID_SLEEP,
-							LID_TRIGGER_LOCK_SCREEN,
-                                                        G_PARAM_READWRITE));
-    
+                                     xfpm_fxconf_param_spec_action (LID_SWITCH_ON_AC_CFG,
+                                                                    XFPM_DO_LOCK_SCREEN));
+
      /**
      * XfpmXfconf::brightness-level-on-ac
      **/
@@ -389,12 +381,8 @@ xfpm_xfconf_class_init (XfpmXfconfClass *klass)
      **/
     g_object_class_install_property (object_class,
                                      PROP_LID_ACTION_ON_BATTERY,
-                                     g_param_spec_uint (LID_SWITCH_ON_BATTERY_CFG,
-                                                        NULL, NULL,
-							LID_TRIGGER_NOTHING,
-							LID_TRIGGER_HYBRID_SLEEP,
-							LID_TRIGGER_LOCK_SCREEN,
-                                                        G_PARAM_READWRITE));
+                                     xfpm_fxconf_param_spec_action (LID_SWITCH_ON_BATTERY_CFG,
+                                                                    XFPM_DO_LOCK_SCREEN));
 
     /**
      * XfpmXfconf::dpms-enabled
@@ -488,24 +476,16 @@ xfpm_xfconf_class_init (XfpmXfconfClass *klass)
      **/
     g_object_class_install_property (object_class,
                                      PROP_IDLE_SLEEP_MODE_ON_BATTERY,
-                                     g_param_spec_uint (INACTIVITY_SLEEP_MODE_ON_BATTERY,
-                                                        NULL, NULL,
-                                                        XFPM_DO_SUSPEND,
-                                                        XFPM_DO_HIBERNATE,
-                                                        XFPM_DO_HIBERNATE,
-                                                        G_PARAM_READWRITE));
+                                     xfpm_fxconf_param_spec_action (INACTIVITY_SLEEP_MODE_ON_BATTERY,
+                                                                    XFPM_DO_HIBERNATE));
 
     /**
      * XfpmXfconf::inactivity-sleep-mode-on-ac
      **/
     g_object_class_install_property (object_class,
                                      PROP_IDLE_SLEEP_MODE_ON_AC,
-                                     g_param_spec_uint (INACTIVITY_SLEEP_MODE_ON_AC,
-                                                        NULL, NULL,
-                                                        XFPM_DO_SUSPEND,
-                                                        XFPM_DO_HIBERNATE,
-                                                        XFPM_DO_SUSPEND,
-                                                        G_PARAM_READWRITE));
+                                     xfpm_fxconf_param_spec_action (INACTIVITY_SLEEP_MODE_ON_AC,
+                                                                    XFPM_DO_SUSPEND));
 
     /**
      * XfpmXfconf::brightness-on-ac

@@ -28,8 +28,10 @@
 G_BEGIN_DECLS
 
 /*
- * Order matters
+ * To maintain backward compatibility, do not change the order of the existing
+ * constants in these enums.
  */
+
 typedef enum
 {
     XFPM_BATTERY_CHARGE_UNKNOWN,
@@ -41,25 +43,23 @@ typedef enum
 
 typedef enum
 {
-    XFPM_DO_NOTHING,
+    /* This is used to determine the minimum value of the XfpmShutdownRequest
+       enum (to install GObject properties etc.) */
+    XFPM_ACTION_MINIMUM_VALUE,
+
+    XFPM_DO_NOTHING = XFPM_ACTION_MINIMUM_VALUE,
     XFPM_DO_SUSPEND,
     XFPM_DO_HIBERNATE,
     XFPM_ASK,
     XFPM_DO_SHUTDOWN,
-    XFPM_DO_HYBRID_SLEEP
+    XFPM_DO_LOCK_SCREEN,
+    XFPM_DO_HYBRID_SLEEP,
+
+    /* Similar to XFPM_ACTION_MINIMUM_VALUE. When adding new constants to this enum,
+       you MUST set this accordingly. */
+    XFPM_ACTION_MAXIMUM_VALUE = XFPM_DO_HYBRID_SLEEP
 
 } XfpmShutdownRequest;
-
-typedef enum
-{
-    LID_TRIGGER_NOTHING,
-    LID_TRIGGER_SUSPEND,
-    LID_TRIGGER_HIBERNATE,
-    LID_TRIGGER_LOCK_SCREEN,
-
-    LID_TRIGGER_HYBRID_SLEEP = XFPM_DO_HYBRID_SLEEP
-
-} XfpmLidTriggerAction;
 
 typedef enum
 {

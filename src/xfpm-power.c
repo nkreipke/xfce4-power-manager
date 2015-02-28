@@ -487,7 +487,7 @@ xfpm_power_sleep (XfpmPower *power, const gchar *sleep_time, gboolean force)
 	        xfpm_suspend_try_action (XFPM_HIBERNATE);
 	    }
     }
-    else
+    else if (!g_strcmp0 (sleep_time, "Suspend"))
     {
 		if (check_for_consolekit2 (power))
 		{
