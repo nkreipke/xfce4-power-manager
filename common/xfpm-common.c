@@ -139,32 +139,23 @@ gboolean xfpm_is_multihead_connected (void)
 {
     GdkDisplay *dpy;
     GdkScreen *screen;
-    gint nscreen;
     gint nmonitor;
     
     dpy = gdk_display_get_default ();
-    
-    nscreen = gdk_display_get_n_screens (dpy);
-    
-    if ( nscreen == 1 )
+
+    screen = gdk_display_get_screen (dpy, 0);
+    if ( screen )
     {
-	screen = gdk_display_get_screen (dpy, 0);
-	if ( screen )
+	nmonitor = gdk_screen_get_n_monitors (screen);
+	if ( nmonitor > 1 )
 	{
-	    nmonitor = gdk_screen_get_n_monitors (screen);
-	    if ( nmonitor > 1 )
-	    {
-		g_debug ("Multiple monitor connected");
-		return TRUE; 
-	    }
-	    else
-		return FALSE;
+	    g_debug ("Multiple monitor connected");
+	    return TRUE;
 	}
-    }
-    else if ( nscreen > 1 )
-    {
-	g_debug ("Multiple screen connected");
-	return TRUE;
+	else
+	{
+	    return FALSE;
+	}
     }
     
     return FALSE;
@@ -178,7 +169,7 @@ GdkPixbuf *xfpm_icon_load (const gchar *icon_name, gint size)
     pix = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (), 
 				    icon_name, 
 				    size,
-				    GTK_ICON_LOOKUP_USE_BUILTIN,
+				    GTK_ICON_LOOKUP_FORCE_SIZE,
 				    &error);
 				    
     if ( error )

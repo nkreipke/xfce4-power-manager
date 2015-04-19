@@ -33,6 +33,7 @@
 #ifdef XFCE_PLUGIN
 #include <libxfce4panel/libxfce4panel.h>
 #include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4util/libxfce4util.h>
 #endif
 
 #include "../power-manager-button.h"
@@ -72,8 +73,8 @@ power_manager_plugin_new (XfcePanelPlugin *plugin)
     gtk_event_box_set_visible_window (GTK_EVENT_BOX(power_manager_plugin->ebox), FALSE);
 
     power_manager_plugin->power_manager_button = power_manager_button_new (plugin);
-    power_manager_button_show(POWER_MANAGER_BUTTON(power_manager_plugin->power_manager_button));
     gtk_container_add (GTK_CONTAINER (power_manager_plugin->ebox), power_manager_plugin->power_manager_button);
+    power_manager_button_show(POWER_MANAGER_BUTTON(power_manager_plugin->power_manager_button));
 
     return power_manager_plugin;
 }
@@ -83,6 +84,8 @@ static void
 power_manager_plugin_construct (XfcePanelPlugin *plugin)
 {
     PowerManagerPlugin *power_manager_plugin;
+
+    xfce_textdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
 
     /* create the plugin */
     power_manager_plugin = power_manager_plugin_new (plugin);

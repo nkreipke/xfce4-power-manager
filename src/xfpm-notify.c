@@ -52,8 +52,7 @@ static NotifyNotification * xfpm_notify_new_notification_internal (const gchar *
 								   const gchar *message, 
 								   const gchar *icon_name, 
 								   guint timeout, 
-								   XfpmNotifyUrgency urgency, 
-								   GtkStatusIcon *icon) G_GNUC_MALLOC;
+								   XfpmNotifyUrgency urgency) G_GNUC_MALLOC;
 
 #define XFPM_NOTIFY_GET_PRIVATE(o) \
 (G_TYPE_INSTANCE_GET_PRIVATE((o), XFPM_TYPE_NOTIFY, XfpmNotifyPrivate))
@@ -174,7 +173,7 @@ xfpm_notify_init (XfpmNotify *notify)
     notify->priv->notify_id   = 0;
     
     notify->priv->monitor = xfpm_dbus_monitor_new ();
-    xfpm_dbus_monitor_add_service (notify->priv->monitor, DBUS_BUS_SESSION, "org.freedesktop.Notifications");
+    xfpm_dbus_monitor_add_service (notify->priv->monitor, G_BUS_TYPE_SESSION, "org.freedesktop.Notifications");
     g_signal_connect (notify->priv->monitor, "service-connection-changed",
 		      G_CALLBACK (xfpm_notify_check_server), notify);
     
@@ -201,8 +200,7 @@ xfpm_notify_set_notification_icon (NotifyNotification *n, const gchar *icon_name
     
     if ( pix )
     {
-	notify_notification_set_icon_from_pixbuf (n,
-						  pix);
+	notify_notification_set_image_from_pixbuf (n, pix);
 	g_object_unref ( G_OBJECT(pix));
     }
     
@@ -211,7 +209,7 @@ xfpm_notify_set_notification_icon (NotifyNotification *n, const gchar *icon_name
 static NotifyNotification *
 xfpm_notify_new_notification_internal (const gchar *title, const gchar *message,
 				       const gchar *icon_name, guint timeout,
-				       XfpmNotifyUrgency urgency, GtkStatusIcon *icon)
+				       XfpmNotifyUrgency urgency)
 {
     NotifyNotification *n;
     
@@ -229,16 +227,6 @@ xfpm_notify_new_notification_internal (const gchar *title, const gchar *message,
     if ( icon_name )
     	xfpm_notify_set_notification_icon (n, icon_name);
 
-#ifdef NOTIFY_CHECK_VERSION
-#if !NOTIFY_CHECK_VERSION (0, 7, 0) 
-    if ( icon )
-    	notify_notification_attach_to_status_icon (n, icon);
-#endif
-#else
-     if ( icon )
-     	notify_notification_attach_to_status_icon (n, icon);
-#endif
-	
     notify_notification_set_urgency (n, (NotifyUrgency)urgency);
     
     if ( timeout != 0)
@@ -307,7 +295,7 @@ xfpm_notify_new (void)
 void xfpm_notify_show_notification (XfpmNotify *notify, const gchar *title,
 				    const gchar *text,  const gchar *icon_name,
 				    gint timeout, gboolean simple,
-				    XfpmNotifyUrgency urgency, GtkStatusIcon *icon)
+				    XfpmNotifyUrgency urgency)
 {
     NotifyNotification *n;
     
@@ -316,9 +304,8 @@ void xfpm_notify_show_notification (XfpmNotify *notify, const gchar *title,
     
     n = xfpm_notify_new_notification_internal (title, 
 				               text, icon_name, 
-					       timeout, urgency, 
-					       icon);
-					       
+					       timeout, urgency);
+
     xfpm_notify_present_notification (notify, n, simple);
 }
 
@@ -327,13 +314,11 @@ NotifyNotification *xfpm_notify_new_notification (XfpmNotify *notify,
 						  const gchar *text,
 						  const gchar *icon_name,
 						  guint timeout,
-						  XfpmNotifyUrgency urgency,
-						  GtkStatusIcon *icon)
+						  XfpmNotifyUrgency urgency)
 {
     NotifyNotification *n = xfpm_notify_new_notification_internal (title, 
 							           text, icon_name, 
-								   timeout, urgency, 
-								   icon);
+								   timeout, urgency);
     return n;
 }
 
